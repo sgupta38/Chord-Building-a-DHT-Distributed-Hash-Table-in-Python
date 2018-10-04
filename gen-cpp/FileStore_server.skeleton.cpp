@@ -52,6 +52,8 @@ class FileStoreHandler : virtual public FileStoreIf {
 
 };
 
+/*
+
 int main(int argc, char **argv) {
   int port = 9090;
   shared_ptr<FileStoreHandler> handler(new FileStoreHandler());
@@ -65,3 +67,4 @@ int main(int argc, char **argv) {
   return 0;
 }
 
+*/
