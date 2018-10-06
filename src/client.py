@@ -23,6 +23,7 @@ def main():
 
     transport.open()
 
+## writeFile
     rfile = RFile()
     rfileMetadata = RFileMetadata()
     
@@ -31,10 +32,9 @@ def main():
     rfileMetadata.contentHash = "xxxxxxxxx"
 
     rfile.meta = rfileMetadata
+    rfile.content = 'ccccc'
     print()
-   # rFile.content = "winter is coming"
 
-## writeFile
     try:
         client.writeFile(rfile);
         print("writeFile() called..") 
@@ -52,6 +52,7 @@ def main():
         print('  FileName: ', _ret.meta.filename)
         print('  Version: ', _ret.meta.version)
         print('  Content Hash: ', _ret.meta.contentHash)
+        print('  Content: ', _ret.content)
         print()
     except SystemException as e:
         print('SystemException: %r' % e)

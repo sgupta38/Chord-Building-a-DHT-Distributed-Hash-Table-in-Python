@@ -25,6 +25,7 @@ class FileStoreHandler:
         print('  FileName: ', rFile.meta.filename)
         print('  Version: ', rFile.meta.version)
         print('  Content Hash: ', rFile.meta.contentHash)
+        print('  Content : ', rFile.content)
 
     def readFile(self, filename):
         print('readFile called()')
@@ -36,7 +37,7 @@ class FileStoreHandler:
 
         rfile = RFile()
         rfile.meta = rfilemetadata
-
+        rfile.content = 'eeeeeeeeeeeeeeeeeeeeeeeeeee'
         return rfile
 
     def setFingertable(self, node_list):
