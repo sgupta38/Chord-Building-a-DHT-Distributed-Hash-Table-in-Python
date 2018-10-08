@@ -25,14 +25,11 @@ def main():
 
 ## writeFile
     rfile = RFile()
-    rfileMetadata = RFileMetadata()
+    rfileMetadata = RFileMetadata('',0,'') # NOTE: structure needs to be initialised with default values. otherwise, nonetype error.
     
     rfileMetadata.filename = 'hello.txt'
-    rfileMetadata.version = 1
-    rfileMetadata.contentHash = "xxxxxxxxx"
-
     rfile.meta = rfileMetadata
-    rfile.content = 'ccccc'
+    rfile.content = 'This is text string'
     print()
 
     try:
