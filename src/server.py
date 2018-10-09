@@ -19,65 +19,106 @@ from thrift.transport import TTransport
 from thrift.protocol import TBinaryProtocol
 from thrift.server import TServer
 
-####
-## HELPER Functions
-####
+# Global variable for storing file ids:
+fileId = {}
+fingerTable = {}
+
+#===========================================================================================================
+#
+# HELPER Functions
+#
+#===========================================================================================================
 
 def calculate256hash(data):
     return hashlib.sha256(data.encode('utf8')).hexdigest()
 
-def createFile(rFile):
-#    try:
+def createFile(filename, content):
+        print('inside createFile')
+        rFile = RFile()
+        meta = RFileMetadata('',0,'')
+        rFile.meta = meta
+ 
+#     try:
         #check if file exits or not.
-        file = Path(rFile.meta.filename)
-        if file.is_file():
-            ## exists, so overwriting contents and incrementing version attribute.
 
+        key = calculate256hash(filename)
+        if key in fileId.keys():                          # if exists, open, override, increment version.
             print('File Already exists')
-            f = open(rFile.meta.filename, "w")
-            f.write(rFile.content)
-            rFile.meta.version = (int(rFile.meta.version) + 1)     ## Somewhere, need to store this in memory. What if another client connects, we have to keep record of last number.
-            rFile.meta.contentHash = calculate256hash(rFile.content)
-            print('incremented file version', rFile.meta.version)
-
+            #Load previous version
+            rFile = fileId[key]
+            f = open(filename, "w")
+            f.write(content)
+            ## Somewhere, need to store this in memory. What if another client connects, we have to keep record of last number.
+            rFile.meta.version = (int(rFile.meta.version) + 1)  
+            rFile.meta.contentHash = calculate256hash(content)
+            rFile.content = content
         else:
             ## Doesn't exist, so creating new file.
 
-            f = open(rFile.meta.filename, "w")
-            f.write(rFile.content)
+            f = open(filename, "w")
+            f.write(content)
             rFile.meta.version = 0
+            rFile.meta.filename = filename
+            rFile.meta.contentHash = calculate256hash(content)
+            rFile.content = content
             print("Successfully created file")
 
         return rFile
- #   except:
-        print('Error in createFile()')
+ #    except:
+ #           print('Error in createFile()')
 
+
+#====================================================================================================================
+#
+#           Class Functions
+#
+#====================================================================================================================
 
 class FileStoreHandler:
 
     def writeFile(self, rFile):
+        print()
         print('writeFile called()')
-        rFile1 =  createFile(rFile)
+        rFile1 =  createFile(rFile.meta.filename, rFile.content)
         print('  FileName: ', rFile1.meta.filename)
         print('  Version: ', rFile1.meta.version)
         print('  Content Hash: ', rFile1.meta.contentHash)
         print('  Content : ', rFile1.content)
 
+        # Adding entry to the FileID data structure.
+        fileId[calculate256hash(rFile.meta.filename)] = rFile1
+
+        print("FileID table:")
+        print(fileId)
+        print()
+
     def readFile(self, filename):
         print('readFile called()')
 
-        rfilemetadata = RFileMetadata()
-        rfilemetadata.filename = 'test1.txt'
-        rfilemetadata.version = 2
-        rfilemetadata.contentHash = 'yyyyyyyyyyyyy'
-
-        rfile = RFile()
-        rfile.meta = rfilemetadata
-        rfile.content = 'eeeeeeeeeeeeeeeeeeeeeeeeeee'
-        return rfile
+## Initially check whether this file exists or not. if not, throw exception
+        key = calculate256hash(filename)
+        if key not in fileId.keys():
+            x = SystemException()
+            x.message = 'File Doesnt Exist'
+            raise x
+        else:
+         rfile = RFile()
+         rfilemetadata = RFileMetadata('',0,'')
+         rfile = fileId[key]
+         return rfile
 
     def setFingertable(self, node_list):
         print('setFingertable called()')
+        array_length = len(node_list)
+
+        print(array_length)
+        for i in range(array_length):
+            fingerTable[i] = node_list[i].id
+        #    print('id: ',node_list[i].id)
+         #   print('ip: ',node_list[i].ip)
+          #  print('port: ',node_list[i].port)
+
+        print('Finger Table: ', fingerTable)
 
    ## key will be given, so find the SUCCESSOR ,
    #  print all info and 
