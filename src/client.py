@@ -22,6 +22,13 @@ def main():
     client = FileStore.Client(protocol)
 
     transport.open()
+    print("getNodeSucc() called..") 
+    next_node =  client.getNodeSucc()
+    print("Next Node ip:", next_node.ip)
+    print("Next Node port:", next_node.port)
+    print("Next Node id:", next_node.id)
+
+
 
 ## writeFile
     rfile = RFile()
@@ -29,7 +36,7 @@ def main():
     
     rfileMetadata.filename = 'hello.txt'
     rfile.meta = rfileMetadata
-    rfile.content = 'This is text string'
+    rfile.content = 'This is text string..!!'
     print()
 
     try:
@@ -43,7 +50,7 @@ def main():
 
     #todo: handle return type
     try:
-        _ret =  client.readFile('temp.txt');
+        _ret =  client.readFile('hello.txt');
 
         print("readFile() called..") 
         print('  FileName: ', _ret.meta.filename)
@@ -54,15 +61,11 @@ def main():
     except SystemException as e:
         print('SystemException: %r' % e)
 
-## setFingerTable
-        client.setFingertable(rfile);
-        print("setFingertable() called..") 
-        print()
-
+'''
 ## findSucc
 
     try:
-        suc =  client.findSucc('test')
+        suc =  client.findSucc('hello.txt')
         print("findSucc() called..") 
         print('  suc id: ', suc.id)
         print('  suc ip: ', suc.ip)
@@ -75,7 +78,7 @@ def main():
 ## findPred
 
     try:
-        pred = client.findPred('test')
+        pred = client.findPred('hello.txt')
         print("findPred() called..") 
         print('  pred id: ', pred.id)
         print('  pred ip: ', pred.ip)
@@ -83,17 +86,7 @@ def main():
         print()
     except SystemException as e:
         print('SystemException: %r' % e)
-
-## getNodeSucc
-
-    try:
-        client.findSucc('getNodeSucc')
-        print("getNodeSucc() called..") 
-        print()
-    except SystemException as e:
-        print('SystemException: %r' % e)
-
-
+'''
 if __name__ == '__main__':
     try:
         main()
