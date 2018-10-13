@@ -4,6 +4,7 @@
 
 import sys
 import glob
+import hashlib
 sys.path.append('gen-py')
 sys.path.insert(0, glob.glob('/home/yaoliu/src_code/local/lib/lib/python2.7/site-packages')[0])
 
@@ -14,6 +15,9 @@ from thrift import Thrift
 from thrift.transport import TSocket
 from thrift.transport import TTransport
 from thrift.protocol import TBinaryProtocol
+def calculate256hash(data):
+    return hashlib.sha256(data.encode('utf8')).hexdigest()
+
 
 def main():
     transport = TSocket.TSocket(sys.argv[1], int(sys.argv[2]))
@@ -22,14 +26,15 @@ def main():
     client = FileStore.Client(protocol)
 
     transport.open()
+    '''
     print("getNodeSucc() called..") 
     next_node =  client.getNodeSucc()
     print("Next Node ip:", next_node.ip)
     print("Next Node port:", next_node.port)
     print("Next Node id:", next_node.id)
+    '''
 
-
-
+    '''    
 ## writeFile
     rfile = RFile()
     rfileMetadata = RFileMetadata('',0,'') # NOTE: structure needs to be initialised with default values. otherwise, nonetype error.
@@ -60,21 +65,21 @@ def main():
         print()
     except SystemException as e:
         print('SystemException: %r' % e)
-
-'''
+    '''
+    
 ## findSucc
 
     try:
-        suc =  client.findSucc('hello.txt')
         print("findSucc() called..") 
+        suc =  client.findSucc(calculate256hash('hello.txt'))
         print('  suc id: ', suc.id)
         print('  suc ip: ', suc.ip)
         print('  suc port: ', suc.port)
         print()
     except SystemException as e:
         print('SystemException: %r' % e)
-
-
+    
+    '''
 ## findPred
 
     try:
@@ -86,7 +91,7 @@ def main():
         print()
     except SystemException as e:
         print('SystemException: %r' % e)
-'''
+    '''
 if __name__ == '__main__':
     try:
         main()
