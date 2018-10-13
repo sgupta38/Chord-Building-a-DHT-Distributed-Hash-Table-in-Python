@@ -76,13 +76,30 @@ def closet_preceding_finger(instance, key):
            print(' between Current node: ', instance.currentNode.id)
            print(' Searching between TABLE Entry ', node.id)
            print(' Searching between KEY', key)
-           if instance.currentNode.id <= node.id <= key:
+           #if instance.currentNode.id <= node.id <= key:
+           if instance.currentNode.id >= node.id and node.id <= key:
                print('closest preceding node is:', node.id)
+               node.port = int(node.port)
                return node
 
        print('returning current node')
        return instance
 
+def connect_to_node(ip, port, key):
+
+    transport = TSocket.TSocket(ip, port)
+    transport = TTransport.TBufferedTransport(transport)
+    protocol = TBinaryProtocol.TBinaryProtocol(transport)
+    client = FileStore.Client(protocol)
+
+    transport.open()
+
+    # calls will go here
+    node = NodeID('','',0)
+    node =  client.findPred(key) 
+    return node
+#todo: close when?
+    transport.close()
 
 #====================================================================================================================
 #
@@ -152,7 +169,7 @@ class FileStoreHandler:
         print('setFingertable called()')
         self.node_list = node_list
         self.currentNode.ip = host_addr 
-        self.currentNode.port = port
+        self.currentNode.port = int(port)
         self.currentNode.id = current_node
         
         array_length = len(node_list)
@@ -169,8 +186,8 @@ class FileStoreHandler:
         if self.currentNode == succ_node:
             print(" 1. This file is owned by MYSELF: ", succ_node)
         else:
-            succ_node =  self.getNodeSucc() 
-            print(" 2. This file is owned by: ", succ_node)
+#            succ_node =  self.getNodeSucc() 
+            print(" 2. POSSIBLE This file is owned by: ", succ_node)
         
         return succ_node
 
@@ -185,6 +202,7 @@ class FileStoreHandler:
         print(' key   ', key)
         print(' First Entry', firstEntry)
 
+#        if self.currentNode.id >= key  and key<= firstEntry:    # check with first index
         if self.currentNode.id <= key <= firstEntry:    # check with first index
             print(' key is between current_node and fingerArray at index 0')
             IsFileOwned = True
@@ -198,8 +216,19 @@ class FileStoreHandler:
                 print(' next closest is', returned_node)
                 return self.currentNode
             else:
+# connect to returned client, call its predecessor.
+
                 print("Need to call recursive Functionn here")
-                return self.currentNode
+                print('Trying to connect')
+                print('ip: ', returned_node.ip)
+                print('port: ', returned_node.port)
+#check if connecting to itself.
+                if returned_node.ip == self.currentNode.ip and returned_node.port == self.currentNode.port:
+                    print('oopsssss its me')
+                    return returned_node
+                else:
+                    possible_node =  connect_to_node(returned_node.ip, returned_node.port, key)
+                    return possible_node
             
 
     #Main Routine:
