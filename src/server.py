@@ -97,10 +97,9 @@ def connect_to_node(ip, port, key):
     # calls will go here
     node = NodeID('','',0)
     node =  client.findPred(key) 
-    return node
-#todo: close when?
     transport.close()
 
+    return node
 #====================================================================================================================
 #
 #           Class Functions
@@ -113,61 +112,79 @@ class FileStoreHandler:
         self.currentNode = NodeID('', '', 0)
 
     def getNodeSucc(self):
-        print('getNodeSucc called()')
+        print('getNodeSucc() called..')
         print('node list entry is', self.node_list[0]) # Returning the first entry
         return self.node_list[0]
     
     def writeFile(self, rFile):
-        print()
+        print('writeFile() called..')
         global IsFileOwned
-        print('writeFile called()')
 
-        # lets check whether findsucc() point to itself or node. If points, write file other wise raise exception and tell where it is.
+    #Delme: remove unwanted function calls
+
         key = calculate256hash(rFile.meta.filename)
         print(' key is', key)
         test_node = self.findSucc(key)
         print(' test node:', test_node)
         print(' Is File Owned', IsFileOwned)
 
-        # if both hashes are same, write file. If it already exists, update version and content.
+        # If 'SUCCESSOR', create file and add entry to 'In-memory File Content Table'
+        # If 'NOT SUCCESSOR', raise a system exception.
+
         if IsFileOwned:
-            print('Hash matches. File is owned by this server. Doing proper action.')
             rFile1 =  createFile(rFile.meta.filename, rFile.content)
             print('  FileName: ', rFile1.meta.filename)
             print('  Version: ', rFile1.meta.version)
             print('  Content Hash: ', rFile1.meta.contentHash)
             print('  Content : ', rFile1.content)
-        # Adding entry to the FileID data structure.
+
+        # Adding entry to the 'In-memory File Content Table' [FileID data structure] 
+        
             fileId[calculate256hash(rFile.meta.filename)] = rFile1
 
-            print("FileID table:")
-            print(fileId)
-            print()
             IsFileOwned = False  # Flag reset
         else:
             x = SystemException()
-            x.message = 'This Server Doesnt owns the file'
+            x.message = 'This Server is not the SUCCESSOR of given file'
             raise x
 
         print()
 
     def readFile(self, filename):
-        print()
-        print('readFile called()')
+        print('readFile() called..')
+        global IsFileOwned
         key = calculate256hash(filename)
-        if key not in fileId.keys():
-            x = SystemException()
-            x.message = 'File Doesnt Exist'
-            raise x
-        else:
-            rfile = RFile()
-            rfilemetadata = RFileMetadata('',0,'')
-            rfile = fileId[key]
-            return rfile
+        test_node = self.findSucc(key)
+        print(' Is File Owned', IsFileOwned)
 
+        # If file is owned, check 'In-memory File Content Table'.
+        # If 'successor' but file not yet written, raise exception
+        # If NOT successor, raise exception
+
+        if IsFileOwned:
+            print()
+            IsFileOwned = False  # Flag reset
+            
+            key = calculate256hash(filename)
+            if key not in fileId.keys():
+                x = SystemException()
+                x.message = 'This server is SUCEESOR of file. But, File is not available yet.'
+                raise x
+            else:
+                rfile = RFile()
+                rfilemetadata = RFileMetadata('',0,'')
+                rfile = fileId[key]
+                return rfile
+        else:
+            x = SystemException()
+            x.message = 'This Server is not the SUCCESSOR of given file'
+            raise x
+
+        print()
+        
     def setFingertable(self, node_list):
-        print('setFingertable called()')
-        self.node_list = node_list
+        print('setFingertable() called..')
+        self.node_list = node_list           # This is setting Finger Table.
         self.currentNode.ip = host_addr 
         self.currentNode.port = int(port)
         self.currentNode.id = current_node
@@ -180,49 +197,49 @@ class FileStoreHandler:
 
 
     def findSucc(self, key):
-        print('findSucc called')
+        print('findSucc() called..')
         succ_node = NodeID('','',0)
         succ_node =  self.findPred(key)
-        if self.currentNode == succ_node:
-            print(" 1. This file is owned by MYSELF: ", succ_node)
-        else:
-#            succ_node =  self.getNodeSucc() 
-            print(" 2. POSSIBLE This file is owned by: ", succ_node)
+
+        # Delme: Remove this
+        print("  This file is owned by: ", succ_node)
         
         return succ_node
 
     def findPred(self, key):
-        print('findPred called()')
+        print('findPred() called..')
         global IsFileOwned
 
         firstEntry = self.node_list[0].id
 
-        print('Firstly check with node and its first entry')
-        print(' node  ', self.currentNode.id)
-        print(' key   ', key)
-        print(' First Entry', firstEntry)
+        #Delme: doubt
 
-#        if self.currentNode.id >= key  and key<= firstEntry:    # check with first index
+    #   if self.currentNode.id >= key  and key<= firstEntry:    # check with first index
         if self.currentNode.id <= key <= firstEntry:    # check with first index
-            print(' key is between current_node and fingerArray at index 0')
+            print(' key is between current_node and fingerTable[0]')
             IsFileOwned = True
-            print('eehaa')
             return self.currentNode
-        else:                                       # Doesnt belongs to first index, start traversing from reverse. 
-            print(' Not in range')
-            #use find pred on this returned value.. recursive
+        else:                                         # Doesnt belongs to first index, start traversing from reverse. 
+            print(' Not in range. Traversing reverse.')
+            #@note: use find pred on this returned value.[ Recursive ]
             returned_node = closet_preceding_finger(self, key)
             if self == returned_node:
                 print(' next closest is', returned_node)
-                return self.currentNode
-            else:
-# connect to returned client, call its predecessor.
+        #@doubt: what ti return. self.currentNode or successor?
+        # IF self is returned, wrong entry is shown when asked for findSucc.
 
-                print("Need to call recursive Functionn here")
-                print('Trying to connect')
+               # return self.currentNode
+                return self.node_list[0] #returning sucessor
+            else:                                      # connect to returned client, call its predecessor.
+                
+                #@Delme: Comments
+                print("Connecting to next hop and traversing its FingerTable")
+                print('Trying to connect:')
                 print('ip: ', returned_node.ip)
                 print('port: ', returned_node.port)
-#check if connecting to itself.
+                
+                # Check if server is not making an RPC call to itself. This might hang the server.
+                
                 if returned_node.ip == self.currentNode.ip and returned_node.port == self.currentNode.port:
                     print('oopsssss its me')
                     return returned_node
