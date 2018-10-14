@@ -67,39 +67,66 @@ def createFile(filename, content):
  #    except:
  #           print('Error in createFile()')
 
+
+def IsInRange(key, id1, id2):
+    if key > id1 and key < id2:       # simple case e.g, 9->[8,20]
+        print('Firsti case')
+        return True
+    elif id1 > id2:                    # This case is used for example 9->[21,19]
+        if key < id1 and key < id2:
+            print('Seocnd case')
+            return True
+        else:
+            return Fals               #e.g, 9->[21,30]
+    else:
+        return False
+
 def closet_preceding_finger(instance, key):
        print('closet_preceding_finger() called')
        print('size of Finger Table= ', len(instance.node_list))
 
        for node in reversed(instance.node_list):
-           print('Searching.. ')
+           print(' Searching.. ')
            print(' between Current node: ', instance.currentNode.id)
            print(' Searching between TABLE Entry ', node.id)
            print(' Searching between KEY', key)
-           #if instance.currentNode.id <= node.id <= key:
-           if instance.currentNode.id >= node.id and node.id <= key:
-               print('closest preceding node is:', node.id)
+           res = IsInRange(node.id, instance.currentNode.id, key)
+           if res:
+               print(' closest preceding node is:', node.id)
                node.port = int(node.port)
                return node
 
        print('returning current node')
-       return instance
+       return instance.currentNode
 
-def connect_to_node(ip, port, key):
+def connect_to_node_fp(ip, port, key):
 
+    print( 'connect_to_node_fp() called...')
     transport = TSocket.TSocket(ip, port)
     transport = TTransport.TBufferedTransport(transport)
     protocol = TBinaryProtocol.TBinaryProtocol(transport)
     client = FileStore.Client(protocol)
 
     transport.open()
-
-    # calls will go here
     node = NodeID('','',0)
-    node =  client.findPred(key) 
+    node =   client.findPred(key) 
     transport.close()
-
     return node
+
+def connect_to_node_gs(ip, port, key):
+
+    print( 'connect_to_node_gs() called...')
+    transport = TSocket.TSocket(ip, port)
+    transport = TTransport.TBufferedTransport(transport)
+    protocol = TBinaryProtocol.TBinaryProtocol(transport)
+    client = FileStore.Client(protocol)
+
+    transport.open()
+    node = NodeID('','',0)
+    node =   client.getNodeSucc() 
+    transport.close()
+    return node
+
 #====================================================================================================================
 #
 #           Class Functions
@@ -198,24 +225,40 @@ class FileStoreHandler:
 
     def findSucc(self, key):
         print('findSucc() called..')
-        succ_node = NodeID('','',0)
-        succ_node =  self.findPred(key)
+        global IsFileOwned
+        p_node = NodeID('','',0)
+        p_node =  self.findPred(key)
 
-        # Delme: Remove this
-        print("  This file is owned by: ", succ_node)
+        if self.currentNode == p_node:
+            print('Myself')
+            s_node = self.node_list[0]
+        else:
+            print(' Connecting to..' )
+            print(' ip: ', p_node.ip)
+            print(' port: ', p_node.port)
+            print(' id: ', p_node.id)
+
+            s_node = connect_to_node_gs(p_node.ip, p_node.port, key)
+
+            if s_node == self.currentNode:
+                IsFileOwned = True
         
-        return succ_node
+        return s_node
 
     def findPred(self, key):
         print('findPred() called..')
         global IsFileOwned
+        node = NodeID('','',0)
+        node = self.currentNode
 
         firstEntry = self.node_list[0].id
 
         #Delme: doubt
 
     #   if self.currentNode.id >= key  and key<= firstEntry:    # check with first index
-        if self.currentNode.id <= key <= firstEntry:    # check with first index
+        result = IsInRange(key, self.currentNode.id, firstEntry)
+#        if self.currentNode.id <= key <= firstEntry:    # check with first index
+        if result:
             print(' key is between current_node and fingerTable[0]')
             IsFileOwned = True
             return self.currentNode
@@ -223,13 +266,10 @@ class FileStoreHandler:
             print(' Not in range. Traversing reverse.')
             #@note: use find pred on this returned value.[ Recursive ]
             returned_node = closet_preceding_finger(self, key)
-            if self == returned_node:
+            if self.currentNode == returned_node:
                 print(' next closest is', returned_node)
-        #@doubt: what ti return. self.currentNode or successor?
-        # IF self is returned, wrong entry is shown when asked for findSucc.
-
-               # return self.currentNode
-                return self.node_list[0] #returning sucessor
+                return self.currentNode
+               # return self.node_list[0] #returning sucessor
             else:                                      # connect to returned client, call its predecessor.
                 
                 #@Delme: Comments
@@ -244,7 +284,7 @@ class FileStoreHandler:
                     print('oopsssss its me')
                     return returned_node
                 else:
-                    possible_node =  connect_to_node(returned_node.ip, returned_node.port, key)
+                    possible_node =  connect_to_node_fp(returned_node.ip, returned_node.port, key)
                     return possible_node
             
 
