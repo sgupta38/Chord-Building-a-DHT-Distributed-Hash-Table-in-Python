@@ -77,7 +77,7 @@ def IsInRange(key, id1, id2):
             print('Seocnd case')
             return True
         else:
-            return Fals               #e.g, 9->[21,30]
+            return False               #e.g, 9->[21,30]
     else:
         return False
 
@@ -152,7 +152,9 @@ class FileStoreHandler:
         key = calculate256hash(rFile.meta.filename)
         print(' key is', key)
         test_node = self.findSucc(key)
-        print(' test node:', test_node)
+        if test_node != self.currentNode:
+            print('File is not owned by me')
+            IsFileOwned = False
         print(' Is File Owned', IsFileOwned)
 
         # If 'SUCCESSOR', create file and add entry to 'In-memory File Content Table'
@@ -182,8 +184,10 @@ class FileStoreHandler:
         global IsFileOwned
         key = calculate256hash(filename)
         test_node = self.findSucc(key)
-        print(' Is File Owned', IsFileOwned)
 
+        if test_node != self.currentNode:
+            print('File is not owned by me')
+            IsFileOwned = False
         # If file is owned, check 'In-memory File Content Table'.
         # If 'successor' but file not yet written, raise exception
         # If NOT successor, raise exception
