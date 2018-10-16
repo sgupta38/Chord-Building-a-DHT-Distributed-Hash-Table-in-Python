@@ -23,6 +23,7 @@ from thrift.server import TServer
 fileId = {}
 current_node = ''
 IsFileOwned = False
+same_key_node_name = False
 #===========================================================================================================
 #
 # HELPER Functions
@@ -69,17 +70,30 @@ def createFile(filename, content):
 
 
 def IsInRange(key, id1, id2):
-    if key > id1 and key < id2:       # simple case e.g, 9->[8,20]
-        print('Firsti case')
+    if key == id1 or key == id2:
+        print( 'One case')
         return True
-    elif id1 > id2:                    # This case is used for example 9->[21,19]
-        if key < id1 and key < id2:
-            print('Seocnd case')
+    if id1 > id2:                    # This case is used for example 9->[21,19]
+        print('Seocnd case')
+        if key > id1 or key < id2:
+            print('Seocnd case-1')
             return True
         else:
+            print('Second case-2')
             return False               #e.g, 9->[21,30]
+    elif id1 < id2:
+        print('Third case')
+        if key > id1 and key < id2:
+            print('Third case-1')
+            return True
+        else:
+            print('Third case-2')
+            return False
     else:
-        return False
+# id1==id2
+        print('Exception id1=id2')
+
+        
 
 def closet_preceding_finger(instance, key):
        print('closet_preceding_finger() called')
@@ -146,6 +160,7 @@ class FileStoreHandler:
     def writeFile(self, rFile):
         print('writeFile() called..')
         global IsFileOwned
+        global same_key_node_name
 
     #Delme: remove unwanted function calls
 
@@ -155,6 +170,11 @@ class FileStoreHandler:
         if test_node != self.currentNode:
             print('File is not owned by me')
             IsFileOwned = False
+
+
+        if same_key_node_name:
+            print('special case I owe file')
+            IsFileOwned = True
         print(' Is File Owned', IsFileOwned)
 
         # If 'SUCCESSOR', create file and add entry to 'In-memory File Content Table'
@@ -182,12 +202,17 @@ class FileStoreHandler:
     def readFile(self, filename):
         print('readFile() called..')
         global IsFileOwned
+        global same_key_node_name
         key = calculate256hash(filename)
         test_node = self.findSucc(key)
 
         if test_node != self.currentNode:
             print('File is not owned by me')
             IsFileOwned = False
+
+        if same_key_node_name:
+            print('special case I owe file')
+            IsFileOwned = True
         # If file is owned, check 'In-memory File Content Table'.
         # If 'successor' but file not yet written, raise exception
         # If NOT successor, raise exception
@@ -230,12 +255,17 @@ class FileStoreHandler:
     def findSucc(self, key):
         print('findSucc() called..')
         global IsFileOwned
+        global same_key_node_name
         p_node = NodeID('','',0)
         p_node =  self.findPred(key)
 
         if self.currentNode == p_node:
             print('Myself')
-            s_node = self.node_list[0]
+            if same_key_node_name:
+                print('special case key==nodeid')
+                return self.currentNode
+            else:
+                s_node = self.node_list[0]
         else:
             print(' Connecting to..' )
             print(' ip: ', p_node.ip)
@@ -251,6 +281,7 @@ class FileStoreHandler:
 
     def findPred(self, key):
         print('findPred() called..')
+        global same_key_node_name
         global IsFileOwned
         node = NodeID('','',0)
         node = self.currentNode
@@ -265,14 +296,22 @@ class FileStoreHandler:
         if result:
             print(' key is between current_node and fingerTable[0]')
             IsFileOwned = True
+
+            if self.currentNode.id == key:   # special case key == node id
+                same_key_node_name = True
+
             return self.currentNode
         else:                                         # Doesnt belongs to first index, start traversing from reverse. 
             print(' Not in range. Traversing reverse.')
             #@note: use find pred on this returned value.[ Recursive ]
             returned_node = closet_preceding_finger(self, key)
             if self.currentNode == returned_node:
-                print(' next closest is', returned_node)
-                return self.currentNode
+                print("calling my  succesor")
+                possible_node =  connect_to_node_fp(self.node_list[0].ip, self.node_list[1].port, key)
+                return possible_node
+                #print(' next closest is', returned_node)
+                #return self.currentNode
+
                # return self.node_list[0] #returning sucessor
             else:                                      # connect to returned client, call its predecessor.
                 
