@@ -172,7 +172,7 @@ class FileStoreHandler:
             IsFileOwned = False
 
 
-        if same_key_node_name:
+        if same_key_node_name and test_node == self.currentNode:
             print('special case I owe file')
             IsFileOwned = True
         print(' Is File Owned', IsFileOwned)
@@ -210,7 +210,7 @@ class FileStoreHandler:
             print('File is not owned by me')
             IsFileOwned = False
 
-        if same_key_node_name:
+        if same_key_node_name and test_node == self.currentNode:
             print('special case I owe file')
             IsFileOwned = True
         # If file is owned, check 'In-memory File Content Table'.
@@ -266,6 +266,9 @@ class FileStoreHandler:
                 return self.currentNode
             else:
                 s_node = self.node_list[0]
+        elif p_node.id == key:
+            print('Workaround: Finger table entry has same enties')
+            return p_node
         else:
             print(' Connecting to..' )
             print(' ip: ', p_node.ip)
@@ -274,16 +277,26 @@ class FileStoreHandler:
 
             s_node = connect_to_node_gs(p_node.ip, p_node.port, key)
 
+            
             if s_node == self.currentNode:
+                print('HANDLE ME')
                 IsFileOwned = True
-        
+            else:
+                print('FLAG RESET')
+                IsFileOwned = False
+            
         return s_node
 
     def findPred(self, key):
         print('findPred() called..')
         global same_key_node_name
         global IsFileOwned
+        
+        same_key_node_name = False
+        IsFileOwned = False
+        
         node = NodeID('','',0)
+
         node = self.currentNode
 
         firstEntry = self.node_list[0].id
@@ -309,10 +322,6 @@ class FileStoreHandler:
                 print("calling my  succesor")
                 possible_node =  connect_to_node_fp(self.node_list[0].ip, self.node_list[1].port, key)
                 return possible_node
-                #print(' next closest is', returned_node)
-                #return self.currentNode
-
-               # return self.node_list[0] #returning sucessor
             else:                                      # connect to returned client, call its predecessor.
                 
                 #@Delme: Comments
@@ -344,9 +353,10 @@ if __name__ == '__main__':
     port = sys.argv[1]
     current_node_data = host_addr +':'+port 
     current_node = calculate256hash(current_node_data)
-    print(current_node_data)
+    print('server IP: ', host_addr)
+    print('server Port: ', port)
     print('node_hash: ', current_node)
 
-    print('Starting the server')
+    print('Server is Started...')
     server.serve()
     print('Done')
