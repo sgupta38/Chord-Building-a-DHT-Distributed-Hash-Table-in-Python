@@ -1,6 +1,7 @@
 #
 # @author: Sonu Gupta
-# @pupose: This file all the routines that are handled by a 'server'
+# @pupose: This file has all the routines that are handled by a 'server'
+# It implements various RPC functions.
 
 
 import glob
@@ -71,23 +72,16 @@ def createFile(filename, content):
 
 def IsInRange(key, id1, id2):
     if key == id1 or key == id2:
-        print( 'One case')
         return True
     if id1 > id2:                    # This case is used for example 9->[21,19]
-        print('Seocnd case')
         if key > id1 or key < id2:
-            print('Seocnd case-1')
             return True
         else:
-            print('Second case-2')
             return False               #e.g, 9->[21,30]
     elif id1 < id2:
-        print('Third case')
         if key > id1 and key < id2:
-            print('Third case-1')
             return True
         else:
-            print('Third case-2')
             return False
     else:
 # id1==id2
@@ -97,20 +91,13 @@ def IsInRange(key, id1, id2):
 
 def closet_preceding_finger(instance, key):
        print('closet_preceding_finger() called')
-       print('size of Finger Table= ', len(instance.node_list))
 
        for node in reversed(instance.node_list):
-           print(' Searching.. ')
-           print(' between Current node: ', instance.currentNode.id)
-           print(' Searching between TABLE Entry ', node.id)
-           print(' Searching between KEY', key)
            res = IsInRange(node.id, instance.currentNode.id, key)
            if res:
-               print(' closest preceding node is:', node.id)
                node.port = int(node.port)
                return node
 
-       print('returning current node')
        return instance.currentNode
 
 def connect_to_node_fp(ip, port, key):
@@ -154,7 +141,6 @@ class FileStoreHandler:
 
     def getNodeSucc(self):
         print('getNodeSucc() called..')
-        print('node list entry is', self.node_list[0]) # Returning the first entry
         return self.node_list[0]
     
     def writeFile(self, rFile):
@@ -165,27 +151,19 @@ class FileStoreHandler:
     #Delme: remove unwanted function calls
 
         key = calculate256hash(rFile.meta.filename)
-        print(' key is', key)
         test_node = self.findSucc(key)
         if test_node != self.currentNode:
-            print('File is not owned by me')
             IsFileOwned = False
 
 
         if same_key_node_name and test_node == self.currentNode:
-            print('special case I owe file')
             IsFileOwned = True
-        print(' Is File Owned', IsFileOwned)
 
         # If 'SUCCESSOR', create file and add entry to 'In-memory File Content Table'
         # If 'NOT SUCCESSOR', raise a system exception.
 
         if IsFileOwned:
             rFile1 =  createFile(rFile.meta.filename, rFile.content)
-            print('  FileName: ', rFile1.meta.filename)
-            print('  Version: ', rFile1.meta.version)
-            print('  Content Hash: ', rFile1.meta.contentHash)
-            print('  Content : ', rFile1.content)
 
         # Adding entry to the 'In-memory File Content Table' [FileID data structure] 
         
@@ -211,7 +189,6 @@ class FileStoreHandler:
             IsFileOwned = False
 
         if same_key_node_name and test_node == self.currentNode:
-            print('special case I owe file')
             IsFileOwned = True
         # If file is owned, check 'In-memory File Content Table'.
         # If 'successor' but file not yet written, raise exception
@@ -256,33 +233,30 @@ class FileStoreHandler:
         print('findSucc() called..')
         global IsFileOwned
         global same_key_node_name
+
+
+        array_length = len(self.node_list)
+        if array_length == 0:
+            x = SystemException()
+            x.message = 'Finger Table is Empty'
+            raise x
+
         p_node = NodeID('','',0)
         p_node =  self.findPred(key)
 
         if self.currentNode == p_node:
-            print('Myself')
             if same_key_node_name:
-                print('special case key==nodeid')
                 return self.currentNode
             else:
                 s_node = self.node_list[0]
         elif p_node.id == key:
-            print('Workaround: Finger table entry has same enties')
             return p_node
         else:
-            print(' Connecting to..' )
-            print(' ip: ', p_node.ip)
-            print(' port: ', p_node.port)
-            print(' id: ', p_node.id)
-
             s_node = connect_to_node_gs(p_node.ip, p_node.port, key)
-
             
             if s_node == self.currentNode:
-                print('HANDLE ME')
                 IsFileOwned = True
             else:
-                print('FLAG RESET')
                 IsFileOwned = False
             
         return s_node
@@ -301,13 +275,8 @@ class FileStoreHandler:
 
         firstEntry = self.node_list[0].id
 
-        #Delme: doubt
-
-    #   if self.currentNode.id >= key  and key<= firstEntry:    # check with first index
         result = IsInRange(key, self.currentNode.id, firstEntry)
-#        if self.currentNode.id <= key <= firstEntry:    # check with first index
         if result:
-            print(' key is between current_node and fingerTable[0]')
             IsFileOwned = True
 
             if self.currentNode.id == key:   # special case key == node id
@@ -315,25 +284,15 @@ class FileStoreHandler:
 
             return self.currentNode
         else:                                         # Doesnt belongs to first index, start traversing from reverse. 
-            print(' Not in range. Traversing reverse.')
             #@note: use find pred on this returned value.[ Recursive ]
             returned_node = closet_preceding_finger(self, key)
             if self.currentNode == returned_node:
-                print("calling my  succesor")
                 possible_node =  connect_to_node_fp(self.node_list[0].ip, self.node_list[1].port, key)
                 return possible_node
             else:                                      # connect to returned client, call its predecessor.
-                
-                #@Delme: Comments
-                print("Connecting to next hop and traversing its FingerTable")
-                print('Trying to connect:')
-                print('ip: ', returned_node.ip)
-                print('port: ', returned_node.port)
-                
                 # Check if server is not making an RPC call to itself. This might hang the server.
                 
                 if returned_node.ip == self.currentNode.ip and returned_node.port == self.currentNode.port:
-                    print('oopsssss its me')
                     return returned_node
                 else:
                     possible_node =  connect_to_node_fp(returned_node.ip, returned_node.port, key)
