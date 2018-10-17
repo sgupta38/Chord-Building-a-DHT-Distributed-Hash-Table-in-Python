@@ -32,9 +32,9 @@ def main():
     rfile = RFile()
     rfileMetadata = RFileMetadata('',0,'') # NOTE: structure needs to be initialised with default values. otherwise, nonetype error.
     
-    rfileMetadata.filename = 'hello.txt'
+    rfileMetadata.filename = sys.argv[3]
     rfile.meta = rfileMetadata
-    rfile.content = 'This is text string..!!'
+    rfile.content = 'Winter Is Coming. Be Prepared.'
     print()
 
     try:
@@ -42,7 +42,7 @@ def main():
         print("writeFile() called..") 
         print()
     except SystemException as e:
-        print('SystemException: %r' % e)
+        print(e)
 	
     transport.close()
 

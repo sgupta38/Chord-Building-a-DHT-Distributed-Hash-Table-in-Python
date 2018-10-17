@@ -29,14 +29,14 @@ def main():
 ## findPred
 
     try:
-        pred = client.findPred(calculate256hash('hello.txt'))
+        pred = client.findPred(calculate256hash(sys.argv[3]))
         print("findPred() called..") 
         print('  pred id: ', pred.id)
         print('  pred ip: ', pred.ip)
         print('  pred  port: ', pred.port)
         print()
     except SystemException as e:
-        print('SystemException: %r' % e)
+        print(e)
 		
     transport.close()
 

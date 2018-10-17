@@ -31,13 +31,13 @@ def main():
 
     try:
         print("findSucc() called..") 
-        suc =  client.findSucc(calculate256hash('hello.txt'))
+        suc =  client.findSucc(calculate256hash(sys.argv[3])) 
         print('  suc id: ', suc.id)
         print('  suc ip: ', suc.ip)
         print('  suc port: ', suc.port)
         print()
     except SystemException as e:
-        print('SystemException: %r' % e)
+        print(e)
 	
     transport.close()
     

@@ -35,7 +35,7 @@ def main():
         print("Next Node port:", next_node.port)
         print()
     except SystemException as e:
-        print('SystemException: %r' % e)
+        print(e)
 
     transport.close()
 	

@@ -32,7 +32,7 @@ def main():
 
     #todo: handle return type
     try:
-        _ret =  client.readFile('hello.txt');
+        _ret =  client.readFile(sys.argv[3]);
 
         print("readFile() called..") 
         print('  FileName: ', _ret.meta.filename)
@@ -41,7 +41,7 @@ def main():
         print('  Content: ', _ret.content)
         print()
     except SystemException as e:
-        print('SystemException: %r' % e)
+        print(e)
 
     transport.close()
 if __name__ == '__main__':
