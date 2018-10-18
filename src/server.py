@@ -35,39 +35,39 @@ def calculate256hash(data):
     return hashlib.sha256(data.encode('utf8')).hexdigest()
 
 def createFile(filename, content):
-        print('inside createFile')
+       # print('inside createFile')
         rFile = RFile()
         meta = RFileMetadata('',0,'')
         rFile.meta = meta
  
-#     try:
+        try:
         #check if file exits or not.
 
-        key = calculate256hash(filename)
-        if key in fileId.keys():                          # if exists, open, override, increment version.
-            print('File Already exists')
-            #Load previous version
-            rFile = fileId[key]
-            f = open(filename, "w")
-            f.write(content)
-            ## Somewhere, need to store this in memory. What if another client connects, we have to keep record of last number.
-            rFile.meta.version = (int(rFile.meta.version) + 1)  
-            rFile.meta.contentHash = calculate256hash(content)
-            rFile.content = content
-        else:
-            ## Doesn't exist, so creating new file.
+            key = calculate256hash(filename)
+            if key in fileId.keys():                          # if exists, open, override, increment version.
+               # print('File Already exists')
+                #Load previous version
+                rFile = fileId[key]
+                f = open(filename, "w")
+                f.write(content)
+                ## Somewhere, need to store this in memory. What if another client connects, we have to keep record of last number.
+                rFile.meta.version = (int(rFile.meta.version) + 1)  
+                rFile.meta.contentHash = calculate256hash(content)
+                rFile.content = content
+            else:
+                ## Doesn't exist, so creating new file.
 
-            f = open(filename, "w")
-            f.write(content)
-            rFile.meta.version = 0
-            rFile.meta.filename = filename
-            rFile.meta.contentHash = calculate256hash(content)
-            rFile.content = content
-            print("Successfully created file")
+                f = open(filename, "w")
+                f.write(content)
+                rFile.meta.version = 0
+                rFile.meta.filename = filename
+                rFile.meta.contentHash = calculate256hash(content)
+                rFile.content = content
+               # print("Successfully created file")
 
-        return rFile
- #    except:
- #           print('Error in createFile()')
+            return rFile
+        except:
+               print('Error in createFile()')
 
 
 def IsInRange(key, id1, id2):
@@ -90,7 +90,7 @@ def IsInRange(key, id1, id2):
         
 
 def closet_preceding_finger(instance, key):
-       print('closet_preceding_finger() called')
+      # print('closet_preceding_finger() called')
 
        for node in reversed(instance.node_list):
            res = IsInRange(node.id, instance.currentNode.id, key)
@@ -102,7 +102,7 @@ def closet_preceding_finger(instance, key):
 
 def connect_to_node_fp(ip, port, key):
 
-    print( 'connect_to_node_fp() called...')
+#    print( 'connect_to_node_fp() called...')
     transport = TSocket.TSocket(ip, port)
     transport = TTransport.TBufferedTransport(transport)
     protocol = TBinaryProtocol.TBinaryProtocol(transport)
@@ -116,7 +116,7 @@ def connect_to_node_fp(ip, port, key):
 
 def connect_to_node_gs(ip, port, key):
 
-    print( 'connect_to_node_gs() called...')
+ #   print( 'connect_to_node_gs() called...')
     transport = TSocket.TSocket(ip, port)
     transport = TTransport.TBufferedTransport(transport)
     protocol = TBinaryProtocol.TBinaryProtocol(transport)
@@ -185,7 +185,7 @@ class FileStoreHandler:
         test_node = self.findSucc(key)
 
         if test_node != self.currentNode:
-            print('File is not owned by me')
+     #       print('File is not owned by me')
             IsFileOwned = False
 
         if same_key_node_name and test_node == self.currentNode:
@@ -221,12 +221,13 @@ class FileStoreHandler:
         self.currentNode.ip = host_addr 
         self.currentNode.port = int(port)
         self.currentNode.id = current_node
-        
+        ''' 
         array_length = len(node_list)
 
         print(array_length)
         for i in range(len(node_list)):
             print(str(i) + ' ' + node_list[i].id + ' ' + node_list[i].ip + ' ' + str(node_list[i].port))
+        '''
 
 
     def findSucc(self, key):
